@@ -26,7 +26,7 @@
 </p>
 
 <p align="center">
-  <a href="https://ko-fi.com/I5Q128RXSP"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Buy me a coffee on Ko-fi"></a>
+  <a href="https://ko-fi.com/I5Q128RXSP"><img src="https://storage.ko-fi.com/cdn/kofi6.png" height="48" alt="Buy me a coffee on Ko-fi"></a>
 </p>
 
 <p align="center">
