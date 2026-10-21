@@ -12,6 +12,8 @@ import { CompleteScreen } from './screens/CompleteScreen'
 import { DownloadingScreen } from './screens/DownloadingScreen'
 import { DownloadsScreen } from './screens/DownloadsScreen'
 import { ErrorScreen } from './screens/ErrorScreen'
+import { VirtualNetworkScreen } from './screens/VirtualNetworkScreen'
+import { useVirtualNetworkEvents } from './hooks/useVirtualNetworkEvents'
 import { useAppStore } from './store/useAppStore'
 
 function assertNever(status: never): never {
@@ -57,6 +59,9 @@ function App(): React.JSX.Element {
   useOpenedLinks()
   useNewDownloadShortcuts()
   useNetworkEvents()
+  useVirtualNetworkEvents()
+
+  const appMode = useAppStore((s) => s.appMode)
 
   return (
     <TooltipProvider>
@@ -64,7 +69,7 @@ function App(): React.JSX.Element {
         <div className="flex h-full flex-col">
           <TitleBar />
           <div className="min-h-0 flex-1">
-            <CurrentScreen />
+            {appMode === 'virtual-network' ? <VirtualNetworkScreen /> : <CurrentScreen />}
           </div>
           <StatusBar />
           <NewDownloadDialog />

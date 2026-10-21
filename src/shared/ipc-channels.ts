@@ -28,12 +28,19 @@ export const IpcChannels = {
   removeDownload: 'download:remove',
   downloadUpdated: 'download:updated',
   networksChanged: 'network:changed',
-  magnetCheckStatus: 'download:magnet-check-status',
   linkReceived: 'app:link-received',
   pendingLinks: 'app:pending-links',
   resumeFromLink: 'app:resume-from-link',
   dismissLink: 'app:dismiss-link',
   updateState: 'update:state',
   updateStateChanged: 'update:state-changed',
-  showUpdateMenu: 'update:show-menu'
+  showUpdateMenu: 'update:show-menu',
+  startVirtualNetwork: 'virtual-network:start',
+  stopVirtualNetwork: 'virtual-network:stop',
+  getVirtualNetworkState: 'virtual-network:get-state',
+  setBondingStrategy: 'virtual-network:set-strategy',
+  setBondingMode: 'virtual-network:set-mode',
+  toggleBondingInterface: 'virtual-network:toggle-interface',
+  setupVirtualNetworkAdapter: 'virtual-network:setup-adapter',
+  virtualNetworkUpdated: 'virtual-network:updated'
 } as const

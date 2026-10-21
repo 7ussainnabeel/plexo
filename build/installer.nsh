@@ -51,3 +51,27 @@
     ${endIf}
   FunctionEnd
 !macroend
+
+# Custom install hook: Automatically configures virtual network adapter environment after installation
+!macro customInstall
+  DetailPrint "Configuring Plexo Virtual Network Adapter..."
+
+  # Allow Plexo through Windows Firewall for inbound/outbound local virtual gateway & multi-adapter bonding
+  nsExec::Exec 'netsh advfirewall firewall add rule name="Plexo Virtual Network" dir=in action=allow program="$appExe" enable=yes profile=any'
+  nsExec::Exec 'netsh advfirewall firewall add rule name="Plexo Virtual Network (Out)" dir=out action=allow program="$appExe" enable=yes profile=any'
+
+  # Disable Windows Connection Manager "Minimize simultaneous connections" policy so Windows doesn't disconnect Wi-Fi when Ethernet or USB tethering is connected
+  WriteRegDWORD HKLM "Software\Policies\Microsoft\Windows\WcmSvc\GroupPolicy" "fMinimizeConnections" 0
+  WriteRegDWORD HKLM "Software\Policies\Microsoft\Windows\WcmSvc\GroupPolicy" "fBlockNonDomain" 0
+
+  # Optimize multi-adapter routing for link aggregation (WeakHostSend & WeakHostReceive)
+  nsExec::Exec 'powershell.exe -NoLogo -NoProfile -NonInteractive -Command "Get-NetIPInterface | Set-NetIPInterface -WeakHostSend Enabled -WeakHostReceive Enabled -ErrorAction SilentlyContinue"'
+!macroend
+
+# Custom uninstall hook: Clean up rules
+!macro customUnInstall
+  DetailPrint "Removing Plexo Virtual Network configuration..."
+  nsExec::Exec 'netsh advfirewall firewall delete rule name="Plexo Virtual Network"'
+  nsExec::Exec 'netsh advfirewall firewall delete rule name="Plexo Virtual Network (Out)"'
+!macroend
+

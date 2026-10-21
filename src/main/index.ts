@@ -9,6 +9,7 @@ import { loadSettings, loadThemeSource, migrateLegacyNetworkPreferences } from '
 import { startUpdater } from './updater'
 import { testKnobs } from './testKnobs'
 import type { DownloadManager } from './download/downloadManager'
+import type { VirtualNetworkManager } from './virtualNetwork/virtualNetworkManager'
 
 // In dev mode the app runs as the raw `electron` binary, which otherwise shows "Electron" in
 // the Dock tooltip/menu bar — must be set before the app is ready. Packaged builds already get
@@ -24,6 +25,7 @@ if (!app.requestSingleInstanceLock()) app.exit(0)
 
 let mainWindow: BrowserWindow | null = null
 let downloadManager: DownloadManager | null = null
+let virtualNetworkManager: VirtualNetworkManager | null = null
 let quitAfterSuspending = false
 let tray: Tray | null = null
 
@@ -161,7 +163,9 @@ app.whenReady().then(async () => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  downloadManager = registerIpcHandlers(() => mainWindow)
+  const managers = registerIpcHandlers(() => mainWindow)
+  downloadManager = managers.downloadManager
+  virtualNetworkManager = managers.virtualNetworkManager
   void startBridge({
     manager: downloadManager,
     offer: (link) => offerLink(link, ensureWindow())
@@ -194,7 +198,16 @@ app.on('before-quit', (event) => {
     app.exit(0)
   }, 3000)
 
-  void downloadManager.suspendAll().finally(() => {
+  const cleanup = async (): Promise<void> => {
+    try {
+      if (virtualNetworkManager) await virtualNetworkManager.stop()
+    } catch (err) {
+      console.error('[plexo] Failed to stop virtual network on quit:', err)
+    }
+    await downloadManager?.suspendAll()
+  }
+
+  void cleanup().finally(() => {
     clearTimeout(forceQuitTimeout)
     quitAfterSuspending = true
     app.exit(0)

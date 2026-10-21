@@ -11,6 +11,63 @@ export interface NetworkAddress {
 
 export type ThemeSource = 'light' | 'dark'
 
+export type VirtualNetworkStatus = 'active' | 'inactive' | 'starting' | 'stopping' | 'error'
+export type BondingStrategy = 'weighted-speed' | 'round-robin' | 'lowest-latency'
+export type VirtualNetworkMode = 'system-proxy' | 'tun-adapter'
+export type AdapterSetupStatus = 'ready' | 'setting-up' | 'needs-setup' | 'error'
+
+export interface AdapterSetupInfo {
+  status: AdapterSetupStatus
+  platform: string
+  details: string
+  installed: boolean
+  lastChecked: number
+}
+
+export interface VirtualNetworkInterfaceStats {
+  id: string
+  device: string
+  displayName: string
+  kind: NetworkInterfaceKind
+  enabled: boolean
+  weight: number
+  downloadSpeed: number
+  uploadSpeed: number
+  activeFlows: number
+  latencyMs: number
+  totalBytesDownloaded: number
+  totalBytesUploaded: number
+}
+
+export interface NetworkFlowEntry {
+  id: string
+  targetHost: string
+  targetPort: number
+  protocol: 'TCP' | 'UDP' | 'HTTP' | 'HTTPS'
+  interfaceId: string
+  interfaceName: string
+  startTime: number
+  bytesTransferred: number
+  state: 'active' | 'closed'
+}
+
+export interface VirtualNetworkState {
+  status: VirtualNetworkStatus
+  mode: VirtualNetworkMode
+  strategy: BondingStrategy
+  proxyPort: number
+  totalDownloadSpeed: number
+  totalUploadSpeed: number
+  totalBytesDownloaded: number
+  totalBytesUploaded: number
+  activeFlowsCount: number
+  uptimeSeconds: number
+  interfaces: VirtualNetworkInterfaceStats[]
+  recentFlows: NetworkFlowEntry[]
+  adapterSetup?: AdapterSetupInfo
+  errorMessage?: string
+}
+
 export interface NetworkInterfaceInfo {
   /** Stable identifier for this interface (currently the OS device name, e.g. "en0"). */
   id: string
@@ -45,14 +102,6 @@ export interface TorrentProbeResult extends ProbeResultBase {
 }
 
 export type ProbeResult = HttpProbeResult | TorrentProbeResult
-
-/** How the check of a magnet link is going, while it's still going: `noPeersYet` once its first
- * search came back empty and it's looking a little longer. */
-export interface MagnetCheckStatus {
-  /** The link as it was given to probeUrl. */
-  link: string
-  noPeersYet: boolean
-}
 
 export interface TorrentInfo {
   infoHash: string

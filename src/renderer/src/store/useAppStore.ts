@@ -39,6 +39,8 @@ interface AppStore {
   /** Finished downloads, newest first (see main/download/history.ts). */
   history: FinishedDownload[]
   view: View
+  appMode: 'virtual-network' | 'downloads'
+  setAppMode: (mode: 'virtual-network' | 'downloads') => void
   downloadFilter: DownloadFilter
   setDownloadFilter: (filter: DownloadFilter) => void
   downloadSchedule: DownloadSchedule | undefined
@@ -124,6 +126,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   downloads: {},
   history: [],
   view: { name: 'list' },
+  appMode: 'virtual-network',
+  setAppMode: (appMode) => set({ appMode }),
   downloadFilter: 'all',
   setDownloadFilter: (downloadFilter) => set({ downloadFilter }),
   downloadSchedule: initial.downloadSchedule,

@@ -3,11 +3,13 @@ import { IpcChannels } from '../shared/ipc-channels'
 import type { IpcContract } from '../shared/ipc-contract'
 import type {
   AppSettings,
+  BondingStrategy,
   DownloadUpdate,
   InitialState,
-  MagnetCheckStatus,
   NetworkInterfaceInfo,
-  UpdateState
+  UpdateState,
+  VirtualNetworkMode,
+  VirtualNetworkState
 } from '../shared/types'
 
 /** Typed wrapper around ipcRenderer.invoke — the channel name picks its args/result shape out of
@@ -63,6 +65,21 @@ const plexoApi = {
     invoke('resumeFromLink', linkId, downloadId),
   dismissLink: (id: string) => invoke('dismissLink', id),
 
+  startVirtualNetwork: (mode?: VirtualNetworkMode) => invoke('startVirtualNetwork', mode),
+  stopVirtualNetwork: () => invoke('stopVirtualNetwork'),
+  getVirtualNetworkState: () => invoke('getVirtualNetworkState'),
+  setBondingStrategy: (strategy: BondingStrategy) => invoke('setBondingStrategy', strategy),
+  setBondingMode: (mode: VirtualNetworkMode) => invoke('setBondingMode', mode),
+  toggleBondingInterface: (interfaceId: string, enabled: boolean) =>
+    invoke('toggleBondingInterface', interfaceId, enabled),
+  setupVirtualNetworkAdapter: () => invoke('setupVirtualNetworkAdapter'),
+
+  onVirtualNetworkUpdated: (callback: (state: VirtualNetworkState) => void): (() => void) => {
+    const listener = (_event: IpcRendererEvent, state: VirtualNetworkState): void => callback(state)
+    ipcRenderer.on(IpcChannels.virtualNetworkUpdated, listener)
+    return () => ipcRenderer.removeListener(IpcChannels.virtualNetworkUpdated, listener)
+  },
+
   /** pendingLinks() has the new link. */
   onLinkReceived: (callback: () => void): (() => void) => {
     const listener = (): void => callback()
@@ -94,12 +111,6 @@ const plexoApi = {
       callback(networks)
     ipcRenderer.on(IpcChannels.networksChanged, listener)
     return () => ipcRenderer.removeListener(IpcChannels.networksChanged, listener)
-  },
-
-  onMagnetCheckStatus: (callback: (status: MagnetCheckStatus) => void): (() => void) => {
-    const listener = (_event: IpcRendererEvent, status: MagnetCheckStatus): void => callback(status)
-    ipcRenderer.on(IpcChannels.magnetCheckStatus, listener)
-    return () => ipcRenderer.removeListener(IpcChannels.magnetCheckStatus, listener)
   }
 }
 

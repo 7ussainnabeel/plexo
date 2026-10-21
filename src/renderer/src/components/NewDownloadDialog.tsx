@@ -23,8 +23,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 
 type ProbeState =
   | { status: 'idle' }
-  /** `noPeersYet`: a magnet link whose first search found no one, still being looked for. */
-  | { status: 'probing'; noPeersYet?: boolean }
+  | { status: 'probing' }
   | { status: 'ready'; result: ProbeResult }
   | { status: 'error'; message: string }
 
@@ -142,12 +141,6 @@ function NewDownloadForm({ onDone }: { onDone: () => void }): React.JSX.Element 
     // answer is no longer wanted then.
     let stale = false
     setProbe({ status: 'probing' })
-    const stopListening = window.plexo.onMagnetCheckStatus((status) => {
-      if (stale || status.link !== trimmed) return
-      setProbe((now) =>
-        now.status === 'probing' ? { status: 'probing', noPeersYet: status.noPeersYet } : now
-      )
-    })
     const timer = setTimeout(async () => {
       try {
         const result = await window.plexo.probeUrl(trimmed)
@@ -162,7 +155,6 @@ function NewDownloadForm({ onDone }: { onDone: () => void }): React.JSX.Element 
     return () => {
       stale = true
       clearTimeout(timer)
-      stopListening()
     }
   }, [url, dropLink])
 
@@ -461,9 +453,7 @@ function NewDownloadForm({ onDone }: { onDone: () => void }): React.JSX.Element 
         )}
 
         {probe.status === 'probing' && (
-          <div className="font-mono text-[11.5px] text-muted-foreground">
-            {probe.noPeersYet ? 'No peers found yet, still looking…' : 'Checking the link…'}
-          </div>
+          <div className="font-mono text-[11.5px] text-muted-foreground">Checking the link…</div>
         )}
         {probe.status === 'error' && (
           <div className="flex items-center gap-2 text-[12.5px] text-[var(--color-danger)]">

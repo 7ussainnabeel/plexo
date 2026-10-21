@@ -96,10 +96,6 @@
         ],
         ['**Debian / Ubuntu:** install the .deb with apt.', 'sudo apt install ./plexo_*.deb'],
         ['**Fedora / RHEL:** install the .rpm with dnf.', 'sudo dnf install ./plexo-*.rpm'],
-        [
-          '**Archive (.tar.gz):** extract it and run plexo from the extracted folder — no FUSE needed.',
-          'tar xzf plexo-*.tar.gz'
-        ],
         ['Using more than one network requires **Linux kernel 5.7 or newer**.']
       ],
       fix: [
@@ -195,8 +191,7 @@
         exe: 'Installer (.exe)',
         appimage: 'AppImage',
         deb: 'Debian / Ubuntu (.deb)',
-        rpm: 'Fedora / RHEL (.rpm)',
-        tarball: 'Archive (.tar.gz)'
+        rpm: 'Fedora / RHEL (.rpm)'
       }[kind] || kind
     )
   }

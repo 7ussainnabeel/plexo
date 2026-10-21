@@ -21,7 +21,6 @@ import { DownloadManager } from '../download/downloadManager'
 import { getDefaultDownloadsDir, getHomeDir } from '../download/paths'
 import { listHistory } from '../download/history'
 import { probeUrl } from '../download/probe'
-import { onMagnetCheckStatus } from '../download/torrent/metadata'
 import { deviceBindingSupported } from '../network/deviceBinding'
 import { pendingLink, pendingLinks, releaseLink } from '../openLinks'
 import { NetworkMonitor } from '../network/interfaces'
@@ -70,7 +69,14 @@ async function freeSpace(dir: string): Promise<number | null> {
   }
 }
 
-export function registerIpcHandlers(getWindow: () => BrowserWindow | null): DownloadManager {
+import { VirtualNetworkManager } from '../virtualNetwork/virtualNetworkManager'
+
+export interface MainManagers {
+  downloadManager: DownloadManager
+  virtualNetworkManager: VirtualNetworkManager
+}
+
+export function registerIpcHandlers(getWindow: () => BrowserWindow | null): MainManagers {
   // The main process keeps the network list, for downloads and the window alike.
   const networks = new NetworkMonitor((list) => {
     manager.networksChanged()
@@ -78,6 +84,8 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): Down
     if (window && !window.isDestroyed()) window.webContents.send(IpcChannels.networksChanged, list)
   })
   const manager = new DownloadManager(getWindow, networks)
+  const virtualNetworkManager = new VirtualNetworkManager(getWindow, networks)
+
   // Waking from sleep, the networks may have changed without a poll in between to see it.
   powerMonitor.on('resume', () => {
     manager.systemResumed()
@@ -158,11 +166,6 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): Down
   })
 
   handle('probeUrl', async (_event, url) => probeUrl(url))
-  onMagnetCheckStatus((status) => {
-    const window = getWindow()
-    if (window && !window.isDestroyed())
-      window.webContents.send(IpcChannels.magnetCheckStatus, status)
-  })
 
   handle('chooseDestinationFolder', async (_event, defaultPath) => {
     const window = getWindow()
@@ -253,5 +256,15 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): Down
   handle('updateState', () => updateState())
   handle('showUpdateMenu', () => showUpdateMenu())
 
-  return manager
+  handle('startVirtualNetwork', async (_event, mode) => virtualNetworkManager.start(mode))
+  handle('stopVirtualNetwork', async () => virtualNetworkManager.stop())
+  handle('getVirtualNetworkState', () => virtualNetworkManager.getState())
+  handle('setBondingStrategy', (_event, strategy) => virtualNetworkManager.setStrategy(strategy))
+  handle('setBondingMode', (_event, mode) => virtualNetworkManager.setMode(mode))
+  handle('toggleBondingInterface', (_event, interfaceId, enabled) =>
+    virtualNetworkManager.toggleInterface(interfaceId, enabled)
+  )
+  handle('setupVirtualNetworkAdapter', async () => virtualNetworkManager.setupAdapter())
+
+  return { downloadManager: manager, virtualNetworkManager }
 }
