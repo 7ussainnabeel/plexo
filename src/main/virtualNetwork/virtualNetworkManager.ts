@@ -35,7 +35,7 @@ interface InterfaceRuntimeData {
 export class VirtualNetworkManager implements ProxyServerDelegate {
   private status: VirtualNetworkStatus = 'inactive'
   private mode: VirtualNetworkMode = 'system-proxy'
-  private strategy: BondingStrategy = 'weighted-speed'
+  private strategy: BondingStrategy = 'simultaneous-parallel'
   private proxyPort = 10800
   private startTime = 0
   private timer: NodeJS.Timeout | null = null
@@ -368,9 +368,36 @@ export class VirtualNetworkManager implements ProxyServerDelegate {
     let primary: NetworkInterfaceInfo
 
     switch (this.strategy) {
+      case 'simultaneous-parallel': {
+        // 1. Prioritize any enabled adapter that currently has 0 active flows
+        // This ensures ALL connected networks are actively transmitting concurrently
+        const idle = pool.find((iface) => this.getOrCreateInterfaceData(iface.id).activeFlows === 0)
+        if (idle) {
+          primary = idle
+        } else {
+          // 2. Distribute to least-loaded active adapters, alternating evenly
+          const sorted = [...pool].sort((a, b) => {
+            const aFlows = this.getOrCreateInterfaceData(a.id).activeFlows
+            const bFlows = this.getOrCreateInterfaceData(b.id).activeFlows
+            return aFlows - bFlows
+          })
+          const leastFlows = this.getOrCreateInterfaceData(sorted[0].id).activeFlows
+          const leastLoaded = sorted.filter(
+            (i) => this.getOrCreateInterfaceData(i.id).activeFlows === leastFlows
+          )
+          const index = this.roundRobinCounter++ % leastLoaded.length
+          primary = leastLoaded[index]
+        }
+        break
+      }
       case 'round-robin': {
-        const index = this.roundRobinCounter++ % pool.length
-        primary = pool[index]
+        const idle = pool.find((iface) => this.getOrCreateInterfaceData(iface.id).activeFlows === 0)
+        if (idle) {
+          primary = idle
+        } else {
+          const index = this.roundRobinCounter++ % pool.length
+          primary = pool[index]
+        }
         break
       }
       case 'lowest-latency': {
@@ -385,6 +412,12 @@ export class VirtualNetworkManager implements ProxyServerDelegate {
       }
       case 'weighted-speed':
       default: {
+        // First check if any adapter has 0 active flows — give it traffic to establish speed baseline!
+        const idle = pool.find((iface) => this.getOrCreateInterfaceData(iface.id).activeFlows === 0)
+        if (idle) {
+          primary = idle
+          break
+        }
         let lowestRatio = Infinity
         primary = pool[0]
         for (const iface of pool) {
@@ -400,8 +433,16 @@ export class VirtualNetworkManager implements ProxyServerDelegate {
       }
     }
 
-    // Place primary first, followed by remaining candidates for failover
-    return [primary, ...pool.filter((i) => i.id !== primary.id)]
+    // Place primary first, followed by remaining candidates ordered by fewest active flows for failover
+    const remaining = pool
+      .filter((i) => i.id !== primary.id)
+      .sort((a, b) => {
+        const aFlows = this.getOrCreateInterfaceData(a.id).activeFlows
+        const bFlows = this.getOrCreateInterfaceData(b.id).activeFlows
+        return aFlows - bFlows
+      })
+
+    return [primary, ...remaining]
   }
 
   private getOrCreateInterfaceData(id: string): InterfaceRuntimeData {

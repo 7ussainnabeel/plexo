@@ -514,14 +514,19 @@ export function VirtualNetworkScreen(): React.JSX.Element {
             <div className="space-y-3">
               {[
                 {
-                  id: 'weighted-speed',
-                  title: 'Dynamic Speed-Weighted (Recommended)',
-                  desc: 'Streams are distributed proportionally based on real-time link speeds. Faster networks handle more traffic automatically.'
+                  id: 'simultaneous-parallel',
+                  title: 'Simultaneous Multi-Link Bonding (All Adapters Active)',
+                  desc: 'Channels and stripes connections concurrently across all physical network adapters at the exact same time, ensuring every adapter carries traffic simultaneously.'
                 },
                 {
                   id: 'round-robin',
                   title: 'Equal Round-Robin',
                   desc: 'Every new TCP/UDP stream is alternated 1:1 across all active connections evenly.'
+                },
+                {
+                  id: 'weighted-speed',
+                  title: 'Dynamic Speed-Weighted',
+                  desc: 'Streams are distributed proportionally based on real-time link speeds while ensuring idle adapters are always engaged.'
                 },
                 {
                   id: 'lowest-latency',

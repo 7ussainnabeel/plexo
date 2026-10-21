@@ -12,7 +12,8 @@ export interface NetworkAddress {
 export type ThemeSource = 'light' | 'dark'
 
 export type VirtualNetworkStatus = 'active' | 'inactive' | 'starting' | 'stopping' | 'error'
-export type BondingStrategy = 'weighted-speed' | 'round-robin' | 'lowest-latency'
+export type BondingStrategy =
+  'simultaneous-parallel' | 'weighted-speed' | 'round-robin' | 'lowest-latency'
 export type VirtualNetworkMode = 'system-proxy' | 'tun-adapter'
 export type AdapterSetupStatus = 'ready' | 'setting-up' | 'needs-setup' | 'error'
 
