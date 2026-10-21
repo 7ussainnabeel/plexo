@@ -145,6 +145,26 @@ export class AdapterSetupManager {
       await execAsync(
         'networksetup -setproxybypassdomains "Plexo Virtual Network" 127.0.0.1 localhost *.local 169.254/16'
       ).catch(() => {})
+
+      // Elevate Plexo Virtual Network to #1 priority in macOS service order so traffic channels through it
+      const { stdout: updatedStdout } = await execAsync('networksetup -listallnetworkservices')
+      const allServices = updatedStdout
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(
+          (s) =>
+            s.length > 0 &&
+            !s.includes('An asterisk (*) denotes that a network service is disabled.')
+        )
+
+      if (allServices.includes('Plexo Virtual Network')) {
+        const reordered = [
+          'Plexo Virtual Network',
+          ...allServices.filter((s) => s !== 'Plexo Virtual Network')
+        ]
+        const orderCmd = `networksetup -ordernetworkservices ${reordered.map((s) => `"${s}"`).join(' ')}`
+        await execAsync(orderCmd).catch(() => {})
+      }
     } catch (err) {
       console.warn('[plexo:adapterSetup] macOS adapter setup notice:', err)
     }
