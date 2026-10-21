@@ -480,7 +480,8 @@ export class VirtualNetworkManager implements ProxyServerDelegate {
             })
           })
         } catch {
-          // Keep previous latency or default
+          const data = this.getOrCreateInterfaceData(iface.id)
+          data.latencyMs = 999
         }
       }
     }

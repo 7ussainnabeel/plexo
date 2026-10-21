@@ -139,6 +139,8 @@ export async function listActiveInterfaces(): Promise<NetworkInterfaceInfo[]> {
 
   for (const [device, addresses] of Object.entries(all)) {
     if (!addresses) continue
+    // Skip virtual container/dummy interfaces that cannot route to the public internet
+    if (/^(feth|veth|docker|dummy|bridge|awdl|llw)/i.test(device)) continue
     const usable: NetworkAddress[] = addresses
       .filter(
         (addr) =>
