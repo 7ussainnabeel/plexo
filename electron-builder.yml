@@ -1,5 +1,5 @@
-appId: com.plexo.app
-productName: Plexo
+appId: com.nexus.app
+productName: Nexus
 # Shown in the macOS About window and Finder's Get Info, and in the Windows file properties.
 copyright: Copyright © 2026 Anmol Kapil
 afterPack: scripts/check-torrent-package.mjs
@@ -23,10 +23,10 @@ files:
 asarUnpack:
   - resources/**
 win:
-  # No protocols or fileAssociations: the NSIS installer would register Plexo as *the* handler for
+  # No protocols or fileAssociations: the NSIS installer would register Nexus as *the* handler for
   # magnet links and .torrent files, taking them from a torrent client the user already has.
-  # A .torrent can still be opened with Plexo through "Open with".
-  executableName: plexo
+  # A .torrent can still be opened with Nexus through "Open with".
+  executableName: nexus
   target:
     - target: nsis
       arch: [x64, arm64]
@@ -52,15 +52,15 @@ mac:
       arch: [x64, arm64]
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
-    - NSDownloadsFolderUsageDescription: Plexo saves downloaded files to your Downloads folder.
-    # Magnet links and .torrent files can be opened with Plexo, as one choice among others: it's
+    - NSDownloadsFolderUsageDescription: Nexus saves downloaded files to your Downloads folder.
+    # Magnet links and .torrent files can be opened with Nexus, as one choice among others: it's
     # never made the default over a torrent client the user already has (LSHandlerRank).
-    # plexo:// is Plexo's own scheme, so registering it takes nothing from another app.
+    # nexus:// is Nexus's own scheme, so registering it takes nothing from another app.
     - CFBundleURLTypes:
         - CFBundleURLName: Magnet link
           CFBundleURLSchemes: [magnet]
-        - CFBundleURLName: Plexo
-          CFBundleURLSchemes: [plexo]
+        - CFBundleURLName: Nexus
+          CFBundleURLSchemes: [nexus, plexo]
       CFBundleDocumentTypes:
         - CFBundleTypeName: Torrent
           CFBundleTypeRole: Viewer

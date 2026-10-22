@@ -14,12 +14,12 @@ import type { VirtualNetworkManager } from './virtualNetwork/virtualNetworkManag
 // In dev mode the app runs as the raw `electron` binary, which otherwise shows "Electron" in
 // the Dock tooltip/menu bar — must be set before the app is ready. Packaged builds already get
 // this from electron-builder's productName, but setting it here keeps dev and packaged in sync.
-app.setName('Plexo')
+app.setName('Nexus')
 
 // Each e2e test runs against its own throwaway userData folder (downloads, manifests, settings).
 if (testKnobs.userDataDir) app.setPath('userData', testKnobs.userDataDir)
 
-// One Plexo at a time (per userData folder, so parallel e2e runs each have their own): a second
+// One Nexus at a time (per userData folder, so parallel e2e runs each have their own): a second
 // launch — a magnet link clicked, a .torrent opened — hands its link to the first and exits.
 if (!app.requestSingleInstanceLock()) app.exit(0)
 
@@ -82,7 +82,7 @@ function createWindow(): void {
     minHeight: 620,
     show: false,
     autoHideMenuBar: true,
-    title: 'Plexo',
+    title: 'Nexus',
     // Matches the renderer's dark-mode background so a live window resize
     // (which briefly exposes the raw window background) doesn't flash white.
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#1c1c1e' : '#ffffff',
@@ -143,14 +143,14 @@ function createWindow(): void {
 }
 
 app.whenReady().then(async () => {
-  electronApp.setAppUserModelId('com.plexo.app')
+  electronApp.setAppUserModelId('com.nexus.app')
 
   // A failed move keeps the old file, to retry next launch — it must never stop the window opening.
   await migrateLegacyNetworkPreferences().catch((error) =>
     console.error('[plexo] failed to migrate network-preferences.json', error)
   )
 
-  // The macOS About window (Plexo › About Plexo); its copyright comes from electron-builder.yml.
+  // The macOS About window (Nexus › About Nexus); its copyright comes from electron-builder.yml.
   app.setAboutPanelOptions({
     credits: 'Developed by Anmol Kapil.\nmacOS code signing provided by Dhananjay Bhosale.'
   })
@@ -170,9 +170,11 @@ app.whenReady().then(async () => {
     manager: downloadManager,
     offer: (link) => offerLink(link, ensureWindow())
   }).catch((error) => console.error('[plexo] browser bridge failed to start', error))
-  // Unlike magnet:, plexo:// is Plexo's own, so registering it takes nothing from another app. A
-  // development build has no fixed path to register.
-  if (app.isPackaged) app.setAsDefaultProtocolClient('plexo')
+  // Register custom schemes
+  if (app.isPackaged) {
+    app.setAsDefaultProtocolClient('nexus')
+    app.setAsDefaultProtocolClient('plexo')
+  }
 
   nativeTheme.on('updated', () => {
     mainWindow?.setBackgroundColor(nativeTheme.shouldUseDarkColors ? '#1c1c1e' : '#ffffff')
@@ -220,13 +222,13 @@ app.on('window-all-closed', () => {
   // Kept running in the tray, so the browser extension can still reach it.
   if (tray) return
   tray = new Tray(nativeImage.createFromPath(icon).resize({ width: 16, height: 16 }))
-  tray.setToolTip('Plexo')
+  tray.setToolTip('Nexus')
   tray.on('click', () => bringForward(ensureWindow()))
   tray.setContextMenu(
     Menu.buildFromTemplate([
-      { label: 'Open Plexo', click: () => bringForward(ensureWindow()) },
+      { label: 'Open Nexus', click: () => bringForward(ensureWindow()) },
       { type: 'separator' },
-      { label: 'Quit Plexo', click: () => app.quit() }
+      { label: 'Quit Nexus', click: () => app.quit() }
     ])
   )
 })

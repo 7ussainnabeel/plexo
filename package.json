@@ -1,7 +1,7 @@
 {
-  "name": "plexo",
+  "name": "nexus",
   "version": "1.0.0-rc.15",
-  "description": "Speed up downloads by combining multiple network connections in parallel",
+  "description": "Speed up downloads and aggregate multi-network connections in parallel",
   "main": "./out/main/index.js",
   "author": "Anmol Kapil",
   "homepage": "https://github.com/anmolkapil/plexo",

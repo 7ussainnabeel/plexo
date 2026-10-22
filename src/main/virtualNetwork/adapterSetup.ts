@@ -96,13 +96,14 @@ export class AdapterSetupManager {
             !s.includes('An asterisk (*) denotes that a network service is disabled.')
         )
 
-      const hasPlexoService = services.includes('Plexo Virtual Network')
+      const hasNexusService =
+        services.includes('Nexus Virtual Network') || services.includes('Plexo Virtual Network')
 
       return {
         status: 'ready',
         platform: 'darwin',
-        details: hasPlexoService
-          ? `macOS Network 'Plexo Virtual Network' is active in macOS Settings (bonding across ${services.length} services)`
+        details: hasNexusService
+          ? `macOS Network 'Nexus Virtual Network' is active in macOS Settings (bonding across ${services.length} services)`
           : `macOS Network ready (bonding across ${services.length} services)`,
         installed: true,
         lastChecked: Date.now()
@@ -130,23 +131,27 @@ export class AdapterSetupManager {
             !s.includes('An asterisk (*) denotes that a network service is disabled.')
         )
 
-      // If "Plexo Virtual Network" doesn't exist yet, create it as an official macOS Network Service
-      if (!services.includes('Plexo Virtual Network')) {
+      // Migrate legacy Plexo Virtual Network if present
+      if (services.includes('Plexo Virtual Network')) {
+        await execAsync(
+          'networksetup -renamenetworkservice "Plexo Virtual Network" "Nexus Virtual Network"'
+        ).catch(() => {})
+      } else if (!services.includes('Nexus Virtual Network')) {
         // Pick primary physical service like Wi-Fi or Ethernet
         const baseService = services.find((s) => /wi-?fi|ethernet|lan/i.test(s)) || services[0]
         if (baseService) {
           await execAsync(
-            `networksetup -duplicatenetworkservice "${baseService}" "Plexo Virtual Network"`
+            `networksetup -duplicatenetworkservice "${baseService}" "Nexus Virtual Network"`
           ).catch(() => {})
         }
       }
 
       // Configure bypass domains
       await execAsync(
-        'networksetup -setproxybypassdomains "Plexo Virtual Network" 127.0.0.1 localhost *.local 169.254/16'
+        'networksetup -setproxybypassdomains "Nexus Virtual Network" 127.0.0.1 localhost *.local 169.254/16'
       ).catch(() => {})
 
-      // Elevate Plexo Virtual Network to #1 priority in macOS service order so traffic channels through it
+      // Elevate Nexus Virtual Network to #1 priority in macOS service order so traffic channels through it
       const { stdout: updatedStdout } = await execAsync('networksetup -listallnetworkservices')
       const allServices = updatedStdout
         .split('\n')
@@ -157,16 +162,16 @@ export class AdapterSetupManager {
             !s.includes('An asterisk (*) denotes that a network service is disabled.')
         )
 
-      if (allServices.includes('Plexo Virtual Network')) {
+      if (allServices.includes('Nexus Virtual Network')) {
         const reordered = [
-          'Plexo Virtual Network',
-          ...allServices.filter((s) => s !== 'Plexo Virtual Network')
+          'Nexus Virtual Network',
+          ...allServices.filter((s) => s !== 'Nexus Virtual Network')
         ]
         const orderCmd = `networksetup -ordernetworkservices ${reordered.map((s) => `"${s}"`).join(' ')}`
         await execAsync(orderCmd).catch(() => {})
       }
     } catch (err) {
-      console.warn('[plexo:adapterSetup] macOS adapter setup notice:', err)
+      console.warn('[nexus:adapterSetup] macOS adapter setup notice:', err)
     }
   }
 
@@ -174,9 +179,10 @@ export class AdapterSetupManager {
   private async checkWindows(): Promise<AdapterSetupInfo> {
     try {
       const { stdout } = await execAsync(
-        'powershell.exe -NoLogo -NoProfile -NonInteractive -Command "Get-NetFirewallRule -DisplayName \'Plexo Virtual Network\' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty DisplayName"'
+        'powershell.exe -NoLogo -NoProfile -NonInteractive -Command "Get-NetFirewallRule -DisplayName \'Nexus Virtual Network\' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty DisplayName"'
       )
-      const hasFirewall = stdout.includes('Plexo Virtual Network')
+      const hasFirewall =
+        stdout.includes('Nexus Virtual Network') || stdout.includes('Plexo Virtual Network')
       return {
         status: hasFirewall ? 'ready' : 'needs-setup',
         platform: 'win32',
@@ -205,7 +211,7 @@ export class AdapterSetupManager {
 
     // 2. Add firewall rules for local virtual gateway
     await execAsync(
-      'netsh advfirewall firewall add rule name="Plexo Virtual Network" dir=in action=allow program="' +
+      'netsh advfirewall firewall add rule name="Nexus Virtual Network" dir=in action=allow program="' +
         process.execPath +
         '" enable=yes profile=any'
     ).catch(() => {})

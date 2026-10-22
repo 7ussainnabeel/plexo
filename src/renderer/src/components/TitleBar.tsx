@@ -2,6 +2,7 @@ import { Download, Shield } from 'lucide-react'
 import { TITLE_BAR_HEIGHT } from '../theme'
 import { useAppStore } from '../store/useAppStore'
 import { useVirtualNetworkStore } from '../store/useVirtualNetworkStore'
+import logo from '../assets/logo.png'
 
 const isMac = window.plexo.platform === 'darwin'
 
@@ -19,8 +20,9 @@ export function TitleBar(): React.JSX.Element {
       }`}
     >
       <div className="flex items-center gap-2">
+        <img src={logo} alt="Nexus" className="h-4 w-4 rounded-xs object-contain" />
         <div className="font-sans text-[13px] leading-none font-bold tracking-tight text-(--text)">
-          Plexo
+          Nexus
         </div>
       </div>
 
